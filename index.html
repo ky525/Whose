@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Awesome Card Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Phaserゲームが画面いっぱいに広がる場合、スクロールバーを非表示にする */
+            background-color: #333; /* ゲームの背景と合わせるか、適当な色 */
+        }
+        canvas {
+            display: block; /* canvas要素の下に余白ができないようにする */
+            margin: 0 auto; /* 中央寄せにしたい場合 */
+        }
+    </style>
+</head>
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+    
+    <script src="src/game.js"></script>
+</body>
+</html>
