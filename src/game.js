@@ -22,21 +22,6 @@ const GAME_CONFIG = {
     MESSAGE_Y: 50 // メッセージ表示のY座標
 };
 
-// Phaserゲームの設定
-const config = {
-    type: Phaser.AUTO,
-    width: 800,
-    height: 700,
-    scene: [BootScene, GameScene],
-    scale: {
-        mode: Phaser.Scale.FIT,
-        autoCenter: Phaser.Scale.CENTER_BOTH
-    },
-    backgroundColor: '#4488aa'
-};
-
-// ゲームインスタンスの作成
-const game = new Phaser.Game(config);
 
 // --- BootScene (アセットの読み込みとテクスチャ生成) ---
 class BootScene extends Phaser.Scene {
@@ -405,3 +390,19 @@ class GameScene extends Phaser.Scene {
         }
     }
 }
+
+// Phaserゲームの設定
+const config = {
+    type: Phaser.AUTO,
+    width: 800,
+    height: 700,
+    scene: [BootScene, GameScene],
+    scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH
+    },
+    backgroundColor: '#4488aa'
+};
+
+// ゲームインスタンスの作成
+const game = new Phaser.Game(config);
