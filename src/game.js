@@ -9,6 +9,23 @@ const PAIRS = {
     11: 12, 12: 11
 };
 
+// ペアごとの色とアルファベット定義
+const PAIR_STYLES = {
+    1: { color: 0xe74c3c, letter: 'A', textColor: '#ffffff' }, // 赤系
+    2: { color: 0xc0392b, letter: 'A', textColor: '#f8f9fa' }, // 濃い赤系
+    3: { color: 0x27ae60, letter: 'B', textColor: '#ffffff' }, // 緑系
+    4: { color: 0x229954, letter: 'B', textColor: '#f8f9fa' }, // 濃い緑系
+    5: { color: 0x3498db, letter: 'C', textColor: '#ffffff' }, // 青系
+    6: { color: 0x2980b9, letter: 'C', textColor: '#f8f9fa' }, // 濃い青系
+    7: { color: 0xf39c12, letter: 'D', textColor: '#ffffff' }, // オレンジ系
+    8: { color: 0xe67e22, letter: 'D', textColor: '#f8f9fa' }, // 濃いオレンジ系
+    9: { color: 0x9b59b6, letter: 'E', textColor: '#ffffff' }, // 紫系
+    10: { color: 0x8e44ad, letter: 'E', textColor: '#f8f9fa' }, // 濃い紫系
+    11: { color: 0x1abc9c, letter: 'F', textColor: '#ffffff' }, // ターコイズ系
+    12: { color: 0x16a085, letter: 'F', textColor: '#f8f9fa' }, // 濃いターコイズ系
+    13: { color: 0x95a5a6, letter: 'X', textColor: '#ffffff' }  // グレー（ペアにならない）
+};
+
 // ゲームの設定
 const GAME_CONFIG = {
     CARD_WIDTH: 100, // カードの幅
@@ -16,10 +33,19 @@ const GAME_CONFIG = {
     BOARD_COLS: 3, // ボードの列数
     BOARD_ROWS: 3, // ボードの行数
     BOARD_PADDING: 20, // ボード全体のパディング
-    DECK_X: 150, // デッキのX座標
-    DECK_Y: 550, // デッキのY座標
+    BOARD_X: -50, // ボードのX座標オフセット（0=中央、正=右、負=左）
+    BOARD_Y: -50, // ボードのY座標オフセット（0=中央、正=下、負=上）
+    DECK_X: 600, // デッキのX座標（左に移動）
+    DECK_Y: 400, // デッキのY座標（画面中央付近）
     MESSAGE_X: 400, // メッセージ表示のX座標
-    MESSAGE_Y: 50 // メッセージ表示のY座標
+    MESSAGE_Y: 50, // メッセージ表示のY座標
+    // カード残り枚数表示の設定
+    CARD_COUNT_DISPLAY_Y_OFFSET: 100, // フィールドからのY座標オフセット
+    CARD_COUNT_CARD_SCALE: 0.4, // カードアイコンのスケール
+    CARD_COUNT_FONT_SIZE: 20, // 残り枚数テキストのフォントサイズを大きく
+    CARD_COUNT_CARD_SPACING: 30, // カード間の間隔
+    CARD_COUNT_PAIR_SPACING: 50, // ペア間の間隔
+    CARD_COUNT_ROW_SPACING: 30 // 上下段の間隔
 };
 
 
@@ -30,76 +56,21 @@ class BootScene extends Phaser.Scene {
     }
 
     preload() {
-        // ロード画面表示（テクスチャ生成中のメッセージ）
-        const loadingText = this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2, 'Generating cards...', {
+        // ロード画面表示
+        const loadingText = this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2, 'Loading cards...', {
             font: '30px Arial',
             fill: '#ffffff'
         }).setOrigin(0.5, 0.5);
+
+        // カード画像を読み込み
+        this.load.image('card_back', 'assets/cards/card_back.png');
+        for (let i = 1; i <= 13; i++) {
+            this.load.image(`card_${i}`, `assets/cards/card_${i}.png`);
+        }
     }
 
     create() {
-        // カードのテクスチャを動的に生成
-        this.createCardTextures();
         this.scene.start('GameScene');
-    }
-
-    /**
-     * カードのテクスチャを動的に生成し、テクスチャマネージャーに追加する
-     */
-    createCardTextures() {
-        const CARD_WIDTH = GAME_CONFIG.CARD_WIDTH;
-        const CARD_HEIGHT = GAME_CONFIG.CARD_HEIGHT;
-        const cornerRadius = 10; // カードの角丸の半径
-
-        // カードの裏面 (card_back) を生成
-        const backGraphics = this.add.graphics();
-        backGraphics.fillStyle(0x000088, 1); // 濃い青色
-        backGraphics.fillRoundedRect(0, 0, CARD_WIDTH, CARD_HEIGHT, cornerRadius);
-        backGraphics.lineStyle(3, 0xffffff, 1); // 白い枠線
-        backGraphics.strokeRoundedRect(0, 0, CARD_WIDTH, CARD_HEIGHT, cornerRadius);
-        backGraphics.fillStyle(0x0000aa, 1); // 中央にデザイン
-        backGraphics.fillCircle(CARD_WIDTH / 2, CARD_HEIGHT / 2, CARD_WIDTH * 0.2);
-        backGraphics.lineStyle(2, 0xaaaaaa, 1);
-        backGraphics.strokeCircle(CARD_WIDTH / 2, CARD_HEIGHT / 2, CARD_WIDTH * 0.3);
-
-        backGraphics.generateTexture('card_back', CARD_WIDTH, CARD_HEIGHT);
-        backGraphics.destroy(); // Graphicsオブジェクトはもう不要なので破棄
-
-        // 1から13までのカード表面を生成
-        for (let i = 1; i <= 13; i++) {
-            // Graphicsでカードのベースを描画
-            const graphics = this.add.graphics();
-            graphics.fillStyle(0xffffff, 1); // 白い背景
-            graphics.fillRoundedRect(0, 0, CARD_WIDTH, CARD_HEIGHT, cornerRadius);
-            graphics.lineStyle(3, 0x000000, 1); // 黒い枠線
-            graphics.strokeRoundedRect(0, 0, CARD_WIDTH, CARD_HEIGHT, cornerRadius);
-
-            // カードの数字を表示
-            // PhaserのテキストはHTML CanvasのdrawTextを使用するため、フォントが利用可能か注意
-            const color = (i % 2 === 0) ? '#ff0000' : '#0000ff'; // 偶数は赤、奇数は青の例 (13は例外的に黒)
-            const textColor = (i === 13) ? '#000000' : color; // 13は黒に
-
-            const numberText = this.add.text(CARD_WIDTH / 2, CARD_HEIGHT / 2, String(i), {
-                fontSize: '48px',
-                fontFamily: 'Arial', // フォントを指定
-                color: textColor,
-                stroke: '#000000', // 縁取り
-                strokeThickness: 3
-            }).setOrigin(0.5);
-
-            // Render Textureを作成し、GraphicsとTextを描画してテクスチャ化
-            const renderTexture = this.add.renderTexture(0, 0, CARD_WIDTH, CARD_HEIGHT);
-            renderTexture.draw(graphics); // Graphicsを描画
-            // drawTextのx, yはrenderTexture内の相対座標
-            renderTexture.draw(numberText, numberText.x, numberText.y); 
-
-            renderTexture.saveTexture(`card_${i}`); // 指定したキーでテクスチャとして保存
-            
-            // 使用したオブジェクトを破棄
-            renderTexture.destroy(); 
-            graphics.destroy(); 
-            numberText.destroy(); 
-        }
     }
 }
 
@@ -114,6 +85,11 @@ class GameScene extends Phaser.Scene {
         this.deckCountText = null; // デッキ残り枚数表示
         this.messageText = null; // メッセージ表示
         this.gameStarted = false; // ゲーム開始フラグ
+        this.deckCounts = {}; // 各カードの残り枚数
+        this.cardCountDisplays = []; // カード残り枚数表示オブジェクトの配列
+        this.deckDisplayCards = []; // デッキ表示用のカードオブジェクト
+        this.draggedCardValue = null; // ドラッグ中のカードの値
+        this.deckBackImage = null; // デッキの裏向きカード画像
     }
 
     create() {
@@ -141,8 +117,8 @@ class GameScene extends Phaser.Scene {
         }
 
         // ボードのグリッド表示とドロップゾーンの設定
-        const startX = (this.sys.game.config.width - (GAME_CONFIG.BOARD_COLS * GAME_CONFIG.CARD_WIDTH + (GAME_CONFIG.BOARD_COLS - 1) * GAME_CONFIG.BOARD_PADDING)) / 2;
-        const startY = (this.sys.game.config.height / 2) - (GAME_CONFIG.BOARD_ROWS * GAME_CONFIG.CARD_HEIGHT + (GAME_CONFIG.BOARD_ROWS - 1) * GAME_CONFIG.BOARD_PADDING) / 2 + 50; // 中央より少し上に調整
+        const startX = (this.sys.game.config.width - (GAME_CONFIG.BOARD_COLS * GAME_CONFIG.CARD_WIDTH + (GAME_CONFIG.BOARD_COLS - 1) * GAME_CONFIG.BOARD_PADDING)) / 2 + GAME_CONFIG.BOARD_X;
+        const startY = (this.sys.game.config.height / 2) - (GAME_CONFIG.BOARD_ROWS * GAME_CONFIG.CARD_HEIGHT + (GAME_CONFIG.BOARD_ROWS - 1) * GAME_CONFIG.BOARD_PADDING) / 2 + GAME_CONFIG.BOARD_Y;
 
         for (let r = 0; r < GAME_CONFIG.BOARD_ROWS; r++) {
             for (let c = 0; c < GAME_CONFIG.BOARD_COLS; c++) {
@@ -164,8 +140,10 @@ class GameScene extends Phaser.Scene {
     }
 
     createDeck() {
+        this.deck = [];
         // 13種類の絵柄のカードを4枚ずつ作成
         for (let i = 1; i <= 13; i++) {
+            this.deckCounts[i] = 4; // 各カードの残り枚数を初期化
             for (let j = 0; j < 4; j++) {
                 this.deck.push(i); // カードの絵柄（数字）を配列に追加
             }
@@ -177,11 +155,15 @@ class GameScene extends Phaser.Scene {
     setupUI() {
         // デッキの残り枚数表示
         // 'card_back' テクスチャを使用
-        this.add.image(GAME_CONFIG.DECK_X, GAME_CONFIG.DECK_Y, 'card_back').setScale(0.8);
-        this.deckCountText = this.add.text(GAME_CONFIG.DECK_X, GAME_CONFIG.DECK_Y + 70, `残り: ${this.deck.length}`, {
+        this.deckBackImage = this.add.image(GAME_CONFIG.DECK_X, GAME_CONFIG.DECK_Y, 'card_back');
+        
+        // デッキの残り枚数を数字だけ表示（デッキ位置の右下）
+        this.deckCountText = this.add.text(GAME_CONFIG.DECK_X + 30, GAME_CONFIG.DECK_Y + 50, `${this.deck.length + 1}`, {
             fontSize: '24px',
-            fill: '#fff'
-        }).setOrigin(0.5);
+            fill: '#fff',
+            stroke: '#000',
+            strokeThickness: 3
+        }).setOrigin(0.5).setDepth(1000);
 
         // メッセージ表示
         this.messageText = this.add.text(GAME_CONFIG.MESSAGE_X, GAME_CONFIG.MESSAGE_Y, '', {
@@ -190,6 +172,9 @@ class GameScene extends Phaser.Scene {
             stroke: '#000', // 黒い縁取り
             strokeThickness: 4
         }).setOrigin(0.5);
+
+        // 各カードの残り枚数表示を作成
+        this.createCardCountDisplays();
 
         // ボード上のドロップイベントをセットアップ
         this.input.on('drop', (pointer, gameObject, dropZone) => {
@@ -222,19 +207,30 @@ class GameScene extends Phaser.Scene {
             const index = row * GAME_CONFIG.BOARD_COLS + col;
             this.cardsOnBoard[index] = gameObject;
 
+            // 残り枚数を減らして表示を更新
+            this.deckCounts[gameObject.cardValue]--;
+            this.updateCardCountDisplay(gameObject.cardValue);
+
+            // currentCardをnullに設定して、次のカードをめくったときに置いたカードが消えないようにする
+            this.currentCard = null;
+
             this.messageText.setText(''); // メッセージをクリア
 
             // ペアチェックと消滅処理
             this.checkAndClearPairs(row, col);
 
-            // 次のカードを配る (0.5秒後に実行)
-            this.time.delayedCall(500, this.dealNextCard, [], this); 
+            // 次のカードを配る（即座に実行）
+            this.dealNextCard();
         });
 
         // ドラッグ開始時の処理
         this.input.on('dragstart', (pointer, gameObject) => {
             if (!this.gameStarted) return;
             this.children.bringToTop(gameObject); // ドラッグ中のカードを手前に表示
+            gameObject.setDepth(999); // デッキ残り枚数（1000）より低い深度に設定
+            
+            // ドラッグ中のカードの値を保存
+            this.draggedCardValue = gameObject.cardValue;
         });
 
         // ドラッグ中の処理
@@ -256,14 +252,26 @@ class GameScene extends Phaser.Scene {
                     ease: 'Power1'
                 });
             }
+            gameObject.setDepth(0); // 深度を元に戻す
+            this.draggedCardValue = null; // ドラッグ中のカードの値をクリア
         });
     }
 
     dealNextCard() {
         // 現在のカードがあれば破棄（前のカードがボードに置かれずに残っている場合など）
-        if (this.currentCard) {
+        if (this.currentCard && this.currentCard.active) {
             this.currentCard.destroy();
             this.currentCard = null;
+        }
+
+        // ゲーム開始後にのみフィールドが全部埋まっているかチェック
+        if (this.gameStarted) {
+            this.checkGameEnd();
+            
+            // ゲームが停止している場合は次のカードを配らない
+            if (!this.gameStarted) {
+                return;
+            }
         }
 
         // デッキにカードが残っているかチェック
@@ -286,7 +294,26 @@ class GameScene extends Phaser.Scene {
     }
 
     updateDeckCount() {
-        this.deckCountText.setText(`残り: ${this.deck.length}`);
+        this.deckCountText.setText(`${this.deck.length + 1}`);
+        
+        // デッキの枚数が0のときは裏向きカードを非表示にする
+        if (this.deck.length === 0) {
+            this.deckBackImage.setVisible(false);
+        } else {
+            this.deckBackImage.setVisible(true);
+        }
+    }
+
+    updateCardCountDisplay(cardValue) {
+        if (this.cardCountDisplays[cardValue]) {
+            this.cardCountDisplays[cardValue].countText.setText(`${this.deckCounts[cardValue]}`);
+            
+            // 残り枚数が0になったらアイコンを薄く表示
+            if (this.deckCounts[cardValue] === 0) {
+                this.cardCountDisplays[cardValue].cardIcon.setAlpha(0.3);
+                this.cardCountDisplays[cardValue].countText.setAlpha(0.3);
+            }
+        }
     }
 
     checkAndClearPairs(row, col) {
@@ -308,7 +335,7 @@ class GameScene extends Phaser.Scene {
         let cardsToClear = []; // 消滅させるカードのリスト（{r, c, cardValue}）
         let foundPair = false;
 
-        // 隣接するカードをチェック
+        // 隣接するカードをチェック（配置したカード自体は除外）
         neighbors.forEach(neighbor => {
             const nr = neighbor.r;
             const nc = neighbor.c;
@@ -346,6 +373,7 @@ class GameScene extends Phaser.Scene {
                     const cardObject = this.cardsOnBoard[index];
 
                     if (cardObject) {
+                        this.board[cardData.r][cardData.c] = null; // ボードの内部状態を更新
                         // フェードアウトと縮小のアニメーション
                         this.tweens.add({
                             targets: cardObject,
@@ -355,7 +383,6 @@ class GameScene extends Phaser.Scene {
                             ease: 'Power2',
                             onComplete: () => {
                                 cardObject.destroy(); // アニメーション終了後にオブジェクトを破棄
-                                this.board[cardData.r][cardData.c] = null; // ボードの内部状態を更新
                                 this.cardsOnBoard[index] = null; // 参照もクリア
                             }
                         });
@@ -366,6 +393,30 @@ class GameScene extends Phaser.Scene {
     }
 
     checkGameEnd() {
+        // フィールドが全部埋まっているかチェック
+        let isBoardFull = true;
+        for (let r = 0; r < GAME_CONFIG.BOARD_ROWS; r++) {
+            for (let c = 0; c < GAME_CONFIG.BOARD_COLS; c++) {
+                if (this.board[r][c] === null) {
+                    isBoardFull = false;
+                    break;
+                }
+            }
+            if (!isBoardFull) break;
+        }
+
+        if (isBoardFull) {
+            // フィールドが全部埋まった場合
+            this.messageText.setText('ゲームオーバー！フィールドが埋まりました');
+            this.gameStarted = false; // ゲームを停止
+            
+            // 画面クリックでゲームを再開
+            this.input.once('pointerdown', () => {
+                this.scene.restart();
+            });
+            return;
+        }
+
         if (this.deck.length === 0) {
             // デッキが空になった場合
             let remainingCards = 0;
@@ -388,6 +439,85 @@ class GameScene extends Phaser.Scene {
                 this.scene.restart(); 
             }, [], this);
         }
+    }
+
+    createCardCountDisplays() {
+        // フィールド下に配置するため、フィールド位置から計算
+        const fieldCenterY = (this.sys.game.config.height / 2) + GAME_CONFIG.BOARD_Y;
+        const fieldHeight = GAME_CONFIG.BOARD_ROWS * GAME_CONFIG.CARD_HEIGHT + (GAME_CONFIG.BOARD_ROWS - 1) * GAME_CONFIG.BOARD_PADDING;
+        const displayY = fieldCenterY + fieldHeight / 2 + GAME_CONFIG.CARD_COUNT_DISPLAY_Y_OFFSET;
+        
+        const cardSpacing = GAME_CONFIG.CARD_COUNT_CARD_SPACING;
+        const cardScale = GAME_CONFIG.CARD_COUNT_CARD_SCALE;
+        const pairSpacing = GAME_CONFIG.CARD_COUNT_PAIR_SPACING;
+        
+        // 6ペア + 1個別カード（13番）を配置（フィールド中央揃え）
+        const startX = (this.sys.game.config.width - (6 * pairSpacing + cardSpacing)) / 2;
+
+        // ペアA-F（1-12）を二段で表示
+        for (let pairIndex = 0; pairIndex < 6; pairIndex++) {
+            const pairX = startX + pairIndex * pairSpacing;
+            
+            // ペアの1つ目のカード（上段）
+            const card1 = pairIndex * 2 + 1;
+            const card1Y = displayY - GAME_CONFIG.CARD_COUNT_ROW_SPACING;
+            
+            // 小さいカードアイコン
+            const cardIcon1 = this.add.image(pairX, card1Y - 10, `card_${card1}`).setScale(cardScale);
+            
+            // 残り枚数テキスト（カード中央に配置して被らせる）
+            const countText1 = this.add.text(pairX, card1Y, `${this.deckCounts[card1]}`, {
+                fontSize: GAME_CONFIG.CARD_COUNT_FONT_SIZE,
+                fill: '#fff',
+                stroke: '#000',
+                strokeThickness: 3
+            }).setOrigin(0.5);
+
+            this.cardCountDisplays[card1] = {
+                cardIcon: cardIcon1,
+                countText: countText1
+            };
+
+            // ペアの2つ目のカード（下段）
+            const card2 = pairIndex * 2 + 2;
+            const card2Y = displayY + GAME_CONFIG.CARD_COUNT_ROW_SPACING;
+            
+            // 小さいカードアイコン
+            const cardIcon2 = this.add.image(pairX, card2Y - 10, `card_${card2}`).setScale(cardScale);
+            
+            // 残り枚数テキスト（カード中央に配置して被らせる）
+            const countText2 = this.add.text(pairX, card2Y, `${this.deckCounts[card2]}`, {
+                fontSize: GAME_CONFIG.CARD_COUNT_FONT_SIZE,
+                fill: '#fff',
+                stroke: '#000',
+                strokeThickness: 3
+            }).setOrigin(0.5);
+
+            this.cardCountDisplays[card2] = {
+                cardIcon: cardIcon2,
+                countText: countText2
+            };
+        }
+
+        // 13番カード（個別）を右端に配置
+        const card13X = startX + 6 * pairSpacing;
+        const card13Y = displayY;
+        
+        // 小さいカードアイコン
+        const cardIcon13 = this.add.image(card13X, card13Y - 10, `card_13`).setScale(cardScale);
+        
+        // 残り枚数テキスト（カード中央に配置して被らせる）
+        const countText13 = this.add.text(card13X, card13Y, `${this.deckCounts[13]}`, {
+            fontSize: GAME_CONFIG.CARD_COUNT_FONT_SIZE,
+            fill: '#fff',
+            stroke: '#000',
+            strokeThickness: 3
+        }).setOrigin(0.5);
+
+        this.cardCountDisplays[13] = {
+            cardIcon: cardIcon13,
+            countText: countText13
+        };
     }
 }
 
