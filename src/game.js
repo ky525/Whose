@@ -35,9 +35,9 @@ const GAME_CONFIG = {
     BOARD_PADDING: 20, // ボード全体のパディング
     BOARD_X: -50, // ボードのX座標オフセット（0=中央、正=右、負=左）
     BOARD_Y: -50, // ボードのY座標オフセット（0=中央、正=下、負=上）
-    DECK_X: 600, // デッキのX座標（左に移動）
+    DECK_X: 500, // デッキのX座標（左に移動）
     DECK_Y: 400, // デッキのY座標（画面中央付近）
-    MESSAGE_X: 400, // メッセージ表示のX座標
+    MESSAGE_X: 300, // メッセージ表示のX座標（画面中央）
     MESSAGE_Y: 50, // メッセージ表示のY座標
     // カード残り枚数表示の設定
     CARD_COUNT_DISPLAY_Y_OFFSET: 100, // フィールドからのY座標オフセット
@@ -350,6 +350,10 @@ class GameScene extends Phaser.Scene {
                     // ペアが見つかった場合、配置したカードと隣接カードの両方を消滅リストに追加
                     cardsToClear.push({ r: row, c: col, cardValue: placedCardValue });
                     cardsToClear.push({ r: nr, c: nc, cardValue: neighborCardValue });
+                    
+                    // 13番カードが隣り合っていたら一緒に消える
+                    this.checkAdjacent13Cards(row, col, cardsToClear);
+                    this.checkAdjacent13Cards(nr, nc, cardsToClear);
                 }
             }
         });
@@ -392,6 +396,31 @@ class GameScene extends Phaser.Scene {
         }
     }
 
+    checkAdjacent13Cards(row, col, cardsToClear) {
+        const neighbors = [
+            { r: row - 1, c: col }, // 上
+            { r: row + 1, c: col }, // 下
+            { r: row, c: col - 1 }, // 左
+            { r: row, c: col + 1 }  // 右
+        ];
+
+        // 隣接するカードをチェック
+        neighbors.forEach(neighbor => {
+            const nr = neighbor.r;
+            const nc = neighbor.c;
+
+            // ボードの範囲内かつカードがあるかチェック
+            if (nr >= 0 && nr < GAME_CONFIG.BOARD_ROWS && nc >= 0 && nc < GAME_CONFIG.BOARD_COLS && this.board[nr][nc] !== null) {
+                const neighborCardValue = this.board[nr][nc];
+
+                // 13番カードが隣り合っていたら消滅リストに追加
+                if (neighborCardValue === 13) {
+                    cardsToClear.push({ r: nr, c: nc, cardValue: neighborCardValue });
+                }
+            }
+        });
+    }
+
     checkGameEnd() {
         // フィールドが全部埋まっているかチェック
         let isBoardFull = true;
@@ -407,7 +436,7 @@ class GameScene extends Phaser.Scene {
 
         if (isBoardFull) {
             // フィールドが全部埋まった場合
-            this.messageText.setText('ゲームオーバー！フィールドが埋まりました');
+            this.messageText.setText('ゲームオーバー！');
             this.gameStarted = false; // ゲームを停止
             
             // 画面クリックでゲームを再開
@@ -429,7 +458,7 @@ class GameScene extends Phaser.Scene {
             }
 
             if (remainingCards === 0) {
-                this.messageText.setText('ゲームクリア！パーフェクト！');
+                this.messageText.setText('パーフェクト！');
             } else {
                 this.messageText.setText('ゲームクリア！');
             }
@@ -524,8 +553,8 @@ class GameScene extends Phaser.Scene {
 // Phaserゲームの設定
 const config = {
     type: Phaser.AUTO,
-    width: 800,
-    height: 700,
+    width: 600,
+    height: 800,
     scene: [BootScene, GameScene],
     scale: {
         mode: Phaser.Scale.FIT,
